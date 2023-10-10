@@ -11,16 +11,46 @@
 #include <stdbool.h> // Import for `bool` data type
 #include <stdlib.h>  // Import for `atoi` funtions
 
-#include "./Functions/server_const.h"
-void portal_handler(connectionFileDescriptor){
+#include "../Functions/server_const.h"
+#include "../Functions/admin_portal.h"
+void portal_handler(int connectionFileDescriptor){
 	printf("Connection is made\n");
 	char readBuffer[1000], writeBuffer[1000];
     	ssize_t readBytes, writeBytes;
-	
+	int choice;
 	writeBytes = write(connectionFileDescriptor, INITIAL_PROMPT, strlen(INITIAL_PROMPT));
 	if (writeBytes == -1){
-        	perror("Error while sending first prompt to the user!");
+        	perror("Error while sending data to the user");
 	}
+	else{
+		bzero(readBuffer, sizeof(readBuffer));
+		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	       	if(readBytes == -1){
+			perror("Error while reading from client");
+		}
+		else if(readBytes == 0){
+			printf("No data was sent to the server\n");
+		}
+		else{
+			choice = atoi(readBuffer);
+			switch(choice){
+				case 1:
+					admin_portal(connectionFileDescriptor);
+					break;
+		/*		case 2:
+					faculty_portal(connectionFileDescriptor);
+					break;
+				case 3: 
+					student_portal(connectionFileDescriptor);
+					break; */
+				default:
+					break;
+				}
+		}
+	}
+	printf("Closing the connection to server\n");
+}
+
 
 
 

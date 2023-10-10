@@ -6,15 +6,39 @@
 #include <sys/socket.h> // Import for `socket`, `bind`, `listen`, `connect` functions
 #include <netinet/ip.h> // Import for `sockaddr_in` stucture
 #include <string.h>     // Import for string functions
-
+#include <stdlib.h>
 void portal_handler(int socketFileDescriptor){
 	char readBuffer[1000], writeBuffer[1000];
     	ssize_t readBytes, writeBytes;        
 	char tempBuffer[1000];	
 
-	
+	do
+	{
+		bzero(readBuffer, sizeof(readBuffer));
+		bzero(tempBuffer, sizeof(tempBuffer));
+		readBytes = read(socketFileDescriptor, readBuffer, sizeof(readBuffer));
+		if(readBytes == -1){
+			perror("Error while reading from client server");
+		}
+		else if(readBytes == 0){
+			printf("Closing the connection\n");
+		}
+		else{
+			bzero(writeBuffer, sizeof(writeBuffer));
+			printf("%s\n", readBuffer);
+                	scanf("%[^\n]%*c", writeBuffer);
+			
+			writeBytes = write(socketFileDescriptor, writeBuffer, strlen(writeBuffer));
+			if(writeBytes == -1){
+				perror("Error while writing to client socket");
+				printf("Closing the connection\n");
+				break;
+			}
 
-
+		}
+	}while(readBytes>0);
+	close(socketFileDescriptor);
+}
 
 void main(){
 	int socketFileDescriptor, connectStatus;
