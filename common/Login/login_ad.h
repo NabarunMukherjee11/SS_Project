@@ -11,7 +11,7 @@
 #include "../../Functions/server_const.h"
 bool login_admin(bool isAdmin, int connectionFileDescriptor);
 
-bool login_admin(bool isAdmin, int connectionFileDescriptor){
+bool login_admin(bool isAdminn, int connectionFileDescriptor){
 	ssize_t readBytes, writeBytes;         
     	char readBuffer[1000], writeBuffer[1000]; 
     	char tempBuffer[1000];
@@ -28,8 +28,9 @@ bool login_admin(bool isAdmin, int connectionFileDescriptor){
                 perror("Error in reading\n");
                 return false;
         }
-	if(strcmp(readBuffer,ADMIN_PASSWORD)){
-			return true;
+	if(strcmp(readBuffer,ADMIN_PASSWORD)==0){
+		printf("inside authentication\n");	
+		return true;
 	}
 	else{
 		return false;

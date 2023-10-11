@@ -1,9 +1,11 @@
 #include "../common/Login/login_ad.h"
 #include "../Functions/server_const.h"
+#include "../structModels/faculty_struct.h"
 #include "../structModels/student_struct.h"
 
 bool admin_portal(int connectionFileDescriptor);
 bool add_student(int connectionFileDescriptor);
+bool add_faculty(int connectionFileDescriptor);
 
 bool admin_portal(int connectionFileDescriptor){
 	if(login_admin(true, connectionFileDescriptor)){   
@@ -32,13 +34,13 @@ bool admin_portal(int connectionFileDescriptor){
 				case 1: 
 					add_student(connectionFileDescriptor);
 					break;
-				case 2:
+				/*case 2:
 					view_student_details(connectionFileDescriptor);
-					break;
+					break;*/
 				case 3:
 					add_faculty(connectionFileDescriptor);
 					break;
-				case 4:
+				/*case 4:
 					view_faculty_details(connectionFileDescriptor);
 					break;
 				case 5: 
@@ -52,7 +54,7 @@ bool admin_portal(int connectionFileDescriptor){
 					break;
 				case 8: 
 					modify_faculty_details(connectionFileDescriptor);
-					break;
+					break;*/
 				case 9: 
 					strcpy(writeBuffer, ADMIN_LOGOUT);
 					writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
@@ -137,35 +139,50 @@ bool add_student(int connectionFileDescriptor){
 
     	strcpy(new_student.name,readBuffer);
 	
-	//for students gender
+	//for students age
        	bzero(writeBuffer, sizeof(writeBuffer));
-	writeBytes = write(connectionFileDescriptor, STUDENT_GENDER, strlen(STUDENT_GENDER));
+	writeBytes = write(connectionFileDescriptor, STUDENT_AGE, strlen(STUDENT_AGE));
 	if (writeBytes == -1)
         {
-                perror("Error writing STUDENT_GENDER message to client!");
+                perror("Error writing STUDENT_AGE message to client!");
                 return false;
         }
 
         bzero(readBuffer, sizeof(readBuffer));
         readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
-	strcpy(new_student.gender,readBuffer);
-	
-	//for students login id
-	bzero(writeBuffer, sizeof(writeBuffer));
-        writeBytes = write(connectionFileDescriptor, STUDENT_LOGIN, strlen(STUDENT_GENDER));
+	strcpy(new_student.age,readBuffer);
+
+	//for students age
+        bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, STUDENT_ADDRESS, strlen(STUDENT_ADDRESS));
         if (writeBytes == -1)
         {
-                perror("Error writing STUDENT_LOGIN message to client!");
+                perror("Error writing STUDENT_ADDRESS message to client!");
                 return false;
         }
 
         bzero(readBuffer, sizeof(readBuffer));
         readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
-        strcpy(new_student.login_id,readBuffer);
+        strcpy(new_student.address,readBuffer);
+	
+	//for students email
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, STUDENT_EMAIL, strlen(STUDENT_EMAIL));
+        if (writeBytes == -1)
+        {
+                perror("Error writing STUDENT_EMAIL message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+	const char *src = "@iiitb.ac.in";
+        strcat(readBuffer, src);
+        strcpy(new_student.email,readBuffer);
 
 	//for students password
 	bzero(writeBuffer, sizeof(writeBuffer));
-        writeBytes = write(connectionFileDescriptor, STUDENT_PASSWORD, strlen(STUDENT_GENDER));
+        writeBytes = write(connectionFileDescriptor, STUDENT_PASSWORD, strlen(STUDENT_PASSWORD));
         if (writeBytes == -1)
         {
                 perror("Error writing STUDENT_PASSWORD message to client!");
@@ -176,6 +193,168 @@ bool add_student(int connectionFileDescriptor){
         readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
         strcpy(new_student.password,readBuffer);
 
+	studentFileDescriptor = open("STUDENT_FILE", O_CREAT | O_APPEND | O_WRONLY, S_IRWXU);
+    	if (studentFileDescriptor == -1)
+    	{
+        	perror("Error while creating / opening student file!");
+        	return false;
+    	}
+	bzero(writeBuffer, sizeof(writeBuffer));
+    	writeBytes = write(studentFileDescriptor, &new_student, sizeof(struct student_struct));
+    	if (writeBytes == -1)
+   	{
+        	perror("Error while writing Student record to file!");
+        	return false;
+    	}
+
+    	close(studentFileDescriptor);
+
+	bzero(writeBuffer, sizeof(writeBuffer));
+	writeBytes = write(connectionFileDescriptor, STUDENT_ADDED, strlen(STUDENT_ADDED));
+        if (writeBytes == -1)
+        {
+                perror("Error writing message");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+	return true;
+}
+
+
+bool add_faculty(int connectionFileDescriptor){
+        ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+
+        struct faculty_struct new_faculty;
+
+	//faculty name
+	writeBytes = write(connectionFileDescriptor, FACULTY_NAME, strlen(FACULTY_NAME));
+        if (writeBytes == -1)
+        {
+                perror("Error writing NAME message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        if (readBytes == -1)
+        {
+                perror("Error reading name");
+                return false;
+        }
+
+        strcpy(new_faculty.name,readBuffer);
+
+        //for faculty department
+        bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_DEPARTMENT, strlen(FACULTY_DEPARTMENT));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_DEPARTMENT message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_faculty.department,readBuffer);
+
+	// for faculty designation
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_DESIGNATION, strlen(FACULTY_DESIGNATION));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_DESIGNATION message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_faculty.designation,readBuffer);
+
+        //for faculty email id
+        bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_EMAIL, strlen(FACULTY_EMAIL));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_EMAIL message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+	const char *src = "@iiitb.ac.in";
+        strcat(readBuffer, src);
+        strcpy(new_faculty.email,readBuffer);
+
+	// for faculty address
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_ADDRESS, strlen(FACULTY_ADDRESS));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_ADDRESS message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_faculty.address,readBuffer);
+
+
+	// for faculty login id
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_LOGIN, strlen(FACULTY_LOGIN));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_LOGIN message to client!");
+                return false;
+        }
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_faculty.login,readBuffer);
+
+	// for faculty password
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_PASSWORD, strlen(FACULTY_PASSWORD));
+        if (writeBytes == -1)
+        {
+                perror("Error writing FACULTY_PASSWORD message to client!");
+                return false;
+        }
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_faculty.password,readBuffer);
+
+
+        int facultyFileDescriptor = open("FACULTY_FILE", O_CREAT | O_APPEND | O_WRONLY, S_IRWXU);
+        if (facultyFileDescriptor == -1)
+        {
+                perror("Error while creating / opening faculty file!");
+                return false;
+        }
+	bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(facultyFileDescriptor, &new_faculty, sizeof(struct faculty_struct));
+        if (writeBytes == -1)
+        {
+                perror("Error while writing Faculty record to file!");
+                return false;
+        }
+
+        close(facultyFileDescriptor);
+
+        bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, FACULTY_ADDED, strlen(FACULTY_ADDED));
+        if (writeBytes == -1)
+        {
+                perror("Error writing message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        return true;
+}
 
 
 
