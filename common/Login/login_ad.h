@@ -31,7 +31,10 @@ bool login_admin(bool isAdmin, int connectionFileDescriptor){
 	if(strcmp(readBuffer,ADMIN_PASSWORD)){
 			return true;
 	}
-	return false;
+	else{
+		return false;
+	}
+	return true;
 }
 
 

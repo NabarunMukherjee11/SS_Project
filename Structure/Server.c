@@ -11,8 +11,9 @@
 #include <stdbool.h> // Import for `bool` data type
 #include <stdlib.h>  // Import for `atoi` funtions
 
-#include "../Functions/server_const.h"
 #include "../Functions/admin_portal.h"
+#include "../Functions/server_const.h"
+
 void portal_handler(int connectionFileDescriptor){
 	printf("Connection is made\n");
 	char readBuffer[1000], writeBuffer[1000];
@@ -75,7 +76,7 @@ void main()
     if (socketBindStatus == -1)
     {
         perror("Error while binding to server socket!");
-        _exit(0);
+        exit(0);
     }
 
     socketListenStatus = listen(socketFileDescriptor, 20);
@@ -83,7 +84,7 @@ void main()
     {
         perror("Error while listening for connections on the server socket!");
         close(socketFileDescriptor);
-        _exit(0);
+        exit(0);
     }
 
     int clientSize;
