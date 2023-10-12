@@ -58,13 +58,13 @@ bool admin_portal(int connectionFileDescriptor){
 					break;
 				case 6:
 					block_student(connectionFileDescriptor);
-					break; /*
+					break; 
 				case 7:
 					modify_student_details(connectionFileDescriptor);
 					break;
 				case 8: 
 					modify_faculty_details(connectionFileDescriptor);
-					break;*/
+					break;
 				case 9: 
 					strcpy(writeBuffer, ADMIN_LOGOUT);
 					writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
@@ -384,7 +384,7 @@ bool add_faculty(int connectionFileDescriptor){
 bool view_student_details(int connectionFileDescriptor){
 	ssize_t readBytes, writeBytes;
         char readBuffer[1000], writeBuffer[1000];
-	int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+	int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY, 0777);
         if (studentFileDescriptor == -1)
         {
                 perror("Error while opening student file");
@@ -452,6 +452,7 @@ bool view_student_details(int connectionFileDescriptor){
           		      	perror("Error while writing to file!");
                 		return false;
         		}
+			close(studentFileDescriptor);
 			readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
 			return true;
 		}
@@ -459,6 +460,7 @@ bool view_student_details(int connectionFileDescriptor){
 	strcpy(writeBuffer,"Wrong Option!\n Press any key to exit\n");
 	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
 	readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	close(studentFileDescriptor);
 	bzero(writeBuffer, sizeof(writeBuffer));
         bzero(readBuffer, sizeof(readBuffer));
         return false;
@@ -498,11 +500,14 @@ bool view_faculty_details(int connectionFileDescriptor){
                 perror("Error while writing to file!");
                 return false;
         }
+	bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	printf("%s\n",readBuffer);
         char login[20];
 
         strcpy(login, readBuffer);
-
+	printf("%s\n",login);
         bzero(writeBuffer, sizeof(writeBuffer));
         bzero(readBuffer, sizeof(readBuffer));
 
@@ -533,12 +538,14 @@ bool view_faculty_details(int connectionFileDescriptor){
                                 return false;
                         }
                         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+			close(facultyFileDescriptor);
                         return true;
                 }
         }
         strcpy(writeBuffer,"Wrong Option!\n Press any key to exit\n");
         writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	close(facultyFileDescriptor);
         bzero(writeBuffer, sizeof(writeBuffer));
         bzero(readBuffer, sizeof(readBuffer));
         return false;
@@ -547,7 +554,7 @@ bool view_faculty_details(int connectionFileDescriptor){
 bool block_student(int connectionFileDescriptor){
 	ssize_t readBytes, writeBytes;
         char readBuffer[1000], writeBuffer[1000];
-        int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+        int studentFileDescriptor = open("STUDENT_FILE", O_RDWR, 0777);
         if (studentFileDescriptor == -1)
         {
                 perror("Error while opening student file");
@@ -593,13 +600,17 @@ bool block_student(int connectionFileDescriptor){
 	while(read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
                 if (strcmp(student1.login, login) == 0){
 			student1.active = false;
+			lseek(studentFileDescriptor, -1 * sizeof(struct student_struct), SEEK_CUR);
+			write(studentFileDescriptor, &student1, sizeof(struct student_struct));
 			strcpy(writeBuffer, STUDENT_BLOCKED);
 			writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
 			readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+			close(studentFileDescriptor);
 			return true;
 		}
 	}
 	strcpy(writeBuffer, STUDENT_NOT_BLOCKED);
+	close(studentFileDescriptor);
 	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
 	return false;
@@ -609,7 +620,7 @@ bool block_student(int connectionFileDescriptor){
 bool activate_student(int connectionFileDescriptor){
         ssize_t readBytes, writeBytes;
         char readBuffer[1000], writeBuffer[1000];
-        int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+        int studentFileDescriptor = open("STUDENT_FILE", O_RDWR, 0777);
         if (studentFileDescriptor == -1)
         {
                 perror("Error while opening student file");
@@ -655,20 +666,284 @@ bool activate_student(int connectionFileDescriptor){
         while(read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
                 if (strcmp(student1.login, login) == 0){
                         student1.active = true;
+			lseek(studentFileDescriptor, -1 * sizeof(struct student_struct), SEEK_CUR);
+                        write(studentFileDescriptor, &student1, sizeof(struct student_struct));
 			strcpy(writeBuffer, STUDENT_ACTIVATED);
                         writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
                         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
-                        return true;
+                        close(studentFileDescriptor);
+		       	return true;
                 }
         }
         strcpy(writeBuffer, STUDENT_NOT_ACTIVATED);
+	close(studentFileDescriptor);
         writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
         readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
         return false;
 }
 
+bool modify_student_details(int connectionFileDescriptor){
+	ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+        int studentFileDescriptor = open("STUDENT_FILE", O_RDWR, 0777);
+        if (studentFileDescriptor == -1)
+        {
+                perror("Error while opening student file");
+                return false;
+        }
+        struct student_struct student1, student;
+        char StudentList[1000];
+        StudentList[0]='\0';
+        while (read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+                if(student1.active == true){
+                        continue;
+                }
+                char tempBuffer[1000];  // Temporary buffer to construct the string
+                sprintf(tempBuffer, "Login: %s ", student1.login);
+                strcat(StudentList, tempBuffer);
+                sprintf(tempBuffer, "Name: %s ", student1.name);
+                strcat(StudentList, tempBuffer);
+                strcat(StudentList, "\n");
+        }
+        lseek(studentFileDescriptor, 0, SEEK_SET);
 
+        strcpy(writeBuffer,StudentList);
+        strcat(writeBuffer, STUDENT_UPDATE);
 
+        bzero(StudentList, sizeof(StudentList));
+        StudentList[0]='\0';
+
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        char login[20];
+
+        strcpy(login, readBuffer);
+	
+	while (read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+		if(strcmp(student1.login,login)==0){
+			lseek(studentFileDescriptor, -1 * sizeof(struct student_struct), SEEK_CUR);
+			//to update name
+        		bzero(writeBuffer, sizeof(writeBuffer));
+        		bzero(readBuffer, sizeof(readBuffer));
+
+        		strcpy(writeBuffer, STUDENT_NAME);
+        		strcat(writeBuffer, CHOICE);
+       			writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        		if(strcmp(readBuffer,"y")==0){
+                		bzero(writeBuffer, sizeof(writeBuffer));
+                		bzero(readBuffer, sizeof(readBuffer));
+
+                		strcpy(writeBuffer, UPDATE);
+                		writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                		strcpy(student1.name,readBuffer);
+        		}
+
+        		//to update address
+        		bzero(writeBuffer, sizeof(writeBuffer));
+        		bzero(readBuffer, sizeof(readBuffer));
+        		strcpy(writeBuffer, STUDENT_ADDRESS);
+        		strcat(writeBuffer, CHOICE);
+        		writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        		if(strcmp(readBuffer,"y")==0){
+                		bzero(writeBuffer, sizeof(writeBuffer));
+                		bzero(readBuffer, sizeof(readBuffer));
+
+                		strcpy(writeBuffer, UPDATE);
+                		writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                		strcpy(student1.address,readBuffer);
+        		}
+
+       			//to update email
+       			bzero(writeBuffer, sizeof(writeBuffer));
+       			bzero(readBuffer, sizeof(readBuffer));
+        		strcpy(writeBuffer, STUDENT_EMAIL);
+        		strcat(writeBuffer, CHOICE);
+        		writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        		if(strcmp(readBuffer,"y")==0){
+                		bzero(writeBuffer, sizeof(writeBuffer));
+                		bzero(readBuffer, sizeof(readBuffer));
+
+                		strcpy(writeBuffer, UPDATE);
+                		writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                		readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                		strcpy(student1.email,readBuffer);
+        		}
+
+        		bzero(writeBuffer, sizeof(writeBuffer));
+        		bzero(readBuffer, sizeof(readBuffer));
+
+			write(studentFileDescriptor, &student1, sizeof(struct student_struct));
+                        close(studentFileDescriptor);
+                        strcpy(writeBuffer, UPDATED);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        return true;
+		}
+	}
+
+        strcpy(writeBuffer, NOT_UPDATED);
+	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        readBytes = read(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        return true;
+}
+
+bool modify_faculty_details(int connectionFileDescriptor){
+	ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+        int facultyFileDescriptor = open("STUDENT_FILE", O_RDWR, 0777);
+        if (facultyFileDescriptor == -1)
+        {
+                perror("Error while opening student file");
+                return false;
+        }
+        struct faculty_struct faculty1;
+        char FacultyList[1000];
+        FacultyList[0]='\0';
+        while (read(facultyFileDescriptor, &faculty1, sizeof(struct faculty_struct)) == sizeof(struct faculty_struct)){
+                char tempBuffer[1000];  // Temporary buffer to construct the string
+                sprintf(tempBuffer, "Login: %s ", faculty1.login);
+                strcat(FacultyList, tempBuffer);
+                sprintf(tempBuffer, "Name: %s ", faculty1.name);
+                strcat(FacultyList, tempBuffer);
+                strcat(FacultyList, "\n");
+        }
+        lseek(facultyFileDescriptor, 0, SEEK_SET);
+
+        strcpy(writeBuffer,FacultyList);
+        strcat(writeBuffer, FACULTY_UPDATE);
+
+        bzero(FacultyList, sizeof(FacultyList));
+        FacultyList[0]='\0';
+
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        char login[20];
+
+        strcpy(login, readBuffer);
+
+        while (read(facultyFileDescriptor, &faculty1, sizeof(struct faculty_struct)) == sizeof(struct faculty_struct)){
+                if(strcmp(faculty1.login,login)==0){
+                        lseek(facultyFileDescriptor, -1 * sizeof(struct faculty_struct), SEEK_CUR);
+                        //to update name
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+
+                        strcpy(writeBuffer, FACULTY_NAME);
+                        strcat(writeBuffer, CHOICE);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        if(strcmp(readBuffer,"y")==0){
+                                bzero(writeBuffer, sizeof(writeBuffer));
+                                bzero(readBuffer, sizeof(readBuffer));
+
+                                strcpy(writeBuffer, UPDATE);
+                                writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                                readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                                strcpy(faculty1.name,readBuffer);
+                        }
+			
+			//to update department
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+
+                        strcpy(writeBuffer, FACULTY_DEPARTMENT);
+                        strcat(writeBuffer, CHOICE);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        if(strcmp(readBuffer,"y")==0){
+                                bzero(writeBuffer, sizeof(writeBuffer));
+                                bzero(readBuffer, sizeof(readBuffer));
+
+                                strcpy(writeBuffer, UPDATE);
+                                writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                                readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                                strcpy(faculty1.department,readBuffer);
+                        }
+
+			//to update designation
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+
+                        strcpy(writeBuffer, FACULTY_DESIGNATION);
+                        strcat(writeBuffer, CHOICE);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        if(strcmp(readBuffer,"y")==0){
+                                bzero(writeBuffer, sizeof(writeBuffer));
+                                bzero(readBuffer, sizeof(readBuffer));
+
+                                strcpy(writeBuffer, UPDATE);
+                                writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                                readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                                strcpy(faculty1.designation,readBuffer);
+                        }
+
+                        //to update address
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+                        strcpy(writeBuffer, FACULTY_ADDRESS);
+                        strcat(writeBuffer, CHOICE);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        if(strcmp(readBuffer,"y")==0){
+                                bzero(writeBuffer, sizeof(writeBuffer));
+                                bzero(readBuffer, sizeof(readBuffer));
+
+                                strcpy(writeBuffer, UPDATE);
+                                writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                                readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                                strcpy(faculty1.address,readBuffer);
+                        }
+
+                        //to update email
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+                        strcpy(writeBuffer, FACULTY_EMAIL);
+                        strcat(writeBuffer, CHOICE);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        if(strcmp(readBuffer,"y")==0){
+                                bzero(writeBuffer, sizeof(writeBuffer));
+                                bzero(readBuffer, sizeof(readBuffer));
+
+                                strcpy(writeBuffer, UPDATE);
+                                writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                                readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                                strcpy(faculty1.email,readBuffer);
+                        }
+
+                        bzero(writeBuffer, sizeof(writeBuffer));
+                        bzero(readBuffer, sizeof(readBuffer));
+
+                        write(facultyFileDescriptor, &faculty1, sizeof(struct student_struct));
+                        close(facultyFileDescriptor);
+                        strcpy(writeBuffer, UPDATED);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        return true;
+                }
+        }
+
+        strcpy(writeBuffer, NOT_UPDATED);
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        readBytes = read(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        return true;
+}
 
 #endif
 
