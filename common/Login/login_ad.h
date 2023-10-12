@@ -1,3 +1,6 @@
+#ifndef LOGIN_ADMIN
+#define LOGIN_ADMIN
+
 #include <stdio.h>     // Import for `printf` & `perror`
 #include <unistd.h>    // Import for `read`, `write & `lseek`
 #include <string.h>    // Import for string functions
@@ -11,7 +14,7 @@
 #include "../../Functions/server_const.h"
 bool login_admin(bool isAdmin, int connectionFileDescriptor);
 
-bool login_admin(bool isAdminn, int connectionFileDescriptor){
+bool login_admin(bool isAdmin, int connectionFileDescriptor){
 	ssize_t readBytes, writeBytes;         
     	char readBuffer[1000], writeBuffer[1000]; 
     	char tempBuffer[1000];
@@ -38,6 +41,6 @@ bool login_admin(bool isAdminn, int connectionFileDescriptor){
 	return true;
 }
 
-
+#endif
 
 

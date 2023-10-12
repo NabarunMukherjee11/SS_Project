@@ -1,3 +1,6 @@
+#ifndef ADMIN_PORTAL
+#define ADMIN_PORTAL
+
 #include "../common/Login/login_ad.h"
 #include "../Functions/server_const.h"
 #include "../structModels/faculty_struct.h"
@@ -6,6 +9,13 @@
 bool admin_portal(int connectionFileDescriptor);
 bool add_student(int connectionFileDescriptor);
 bool add_faculty(int connectionFileDescriptor);
+bool view_student_details(int connectionFileDescriptor);
+bool view_faculty_details(int connectionFileDescriptor);
+bool modify_student_details(int connectionFileDescriptor);
+bool modify_faculty_details(int connectionFileDescriptor);
+bool activate_student(int connectionFileDescriptor);
+bool block_student(int connectionFileDescriptor);
+
 
 bool admin_portal(int connectionFileDescriptor){
 	if(login_admin(true, connectionFileDescriptor)){   
@@ -34,13 +44,13 @@ bool admin_portal(int connectionFileDescriptor){
 				case 1: 
 					add_student(connectionFileDescriptor);
 					break;
-				/*case 2:
+				case 2:
 					view_student_details(connectionFileDescriptor);
-					break;*/
+					break;
 				case 3:
 					add_faculty(connectionFileDescriptor);
 					break;
-				/*case 4:
+				case 4:
 					view_faculty_details(connectionFileDescriptor);
 					break;
 				case 5: 
@@ -48,7 +58,7 @@ bool admin_portal(int connectionFileDescriptor){
 					break;
 				case 6:
 					block_student(connectionFileDescriptor);
-					break;
+					break; /*
 				case 7:
 					modify_student_details(connectionFileDescriptor);
 					break;
@@ -180,6 +190,19 @@ bool add_student(int connectionFileDescriptor){
         strcat(readBuffer, src);
         strcpy(new_student.email,readBuffer);
 
+	//for students login
+        bzero(writeBuffer, sizeof(writeBuffer));
+        writeBytes = write(connectionFileDescriptor, STUDENT_LOGIN, strlen(STUDENT_EMAIL));
+        if (writeBytes == -1)
+        {
+                perror("Error writing STUDENT_LOGIN message to client!");
+                return false;
+        }
+
+        bzero(readBuffer, sizeof(readBuffer));
+        readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
+        strcpy(new_student.login,readBuffer);
+
 	//for students password
 	bzero(writeBuffer, sizeof(writeBuffer));
         writeBytes = write(connectionFileDescriptor, STUDENT_PASSWORD, strlen(STUDENT_PASSWORD));
@@ -189,9 +212,11 @@ bool add_student(int connectionFileDescriptor){
                 return false;
         }
 
-        bzero(readBuffer, sizeof(readBuffer));
+	bzero(readBuffer, sizeof(readBuffer));
         readBytes = read(connectionFileDescriptor, &readBuffer, sizeof(readBuffer));
         strcpy(new_student.password,readBuffer);
+
+	new_student.active = true;
 
 	studentFileDescriptor = open("STUDENT_FILE", O_CREAT | O_APPEND | O_WRONLY, S_IRWXU);
     	if (studentFileDescriptor == -1)
@@ -356,6 +381,295 @@ bool add_faculty(int connectionFileDescriptor){
         return true;
 }
 
+bool view_student_details(int connectionFileDescriptor){
+	ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+	int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+        if (studentFileDescriptor == -1)
+        {
+                perror("Error while opening student file");
+                return false;
+        }
+	struct student_struct student1, student;
+	char StudentList[1000];
+	StudentList[0]='\0';
+        while (read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+		char tempBuffer[1000];  // Temporary buffer to construct the string
+    		sprintf(tempBuffer, "Login: %s ", student1.login);
+		strcat(StudentList, tempBuffer);
+		sprintf(tempBuffer, "Name: %s ", student1.name);
+		strcat(StudentList, tempBuffer);
+		strcat(StudentList, "\n");
+	}
+	lseek(studentFileDescriptor, 0, SEEK_SET);
 
+	strcpy(writeBuffer,StudentList);
+	strcat(writeBuffer, STUDENT_DETAILS);
+
+	bzero(StudentList, sizeof(StudentList));
+	StudentList[0]='\0';
+
+	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+	if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+	readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	char login[20];
+	
+	strcpy(login, readBuffer);
+	
+	bzero(writeBuffer, sizeof(writeBuffer));
+	bzero(readBuffer, sizeof(readBuffer));
+	
+	while(read(studentFileDescriptor, &student, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+		if (strcmp(student.login, login) == 0){
+			char myStr[100];
+			sprintf(myStr, "Roll No: %d\n", student.roll_no);
+			strcat(StudentList, myStr);
+
+			sprintf(myStr, "Name: %s\n", student.name);
+			strcat(StudentList, myStr);
+
+			sprintf(myStr, "Email: %s\n", student.email);
+			strcat(StudentList, myStr);
+
+			sprintf(myStr, "Address: %s\n", student.address);
+			strcat(StudentList, myStr);
+
+			sprintf(myStr, "Age: %s\n", student.age);
+			strcat(StudentList, myStr);
+
+			sprintf(myStr, "Login ID: %s\n", student.login);
+			strcat(StudentList, myStr);
+
+			strcpy(writeBuffer, StudentList);
+			strcat(writeBuffer, "Press any key to exit\n");
+			writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+       		 	if (writeBytes == -1)
+        		{
+          		      	perror("Error while writing to file!");
+                		return false;
+        		}
+			readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+			return true;
+		}
+	}
+	strcpy(writeBuffer,"Wrong Option!\n Press any key to exit\n");
+	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+	readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
+        return false;
+}
+
+bool view_faculty_details(int connectionFileDescriptor){
+	ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+        int facultyFileDescriptor = open("FACULTY_FILE", O_RDONLY);
+        if (facultyFileDescriptor == -1)
+        {
+                perror("Error while opening file");
+                return false;
+        }
+        struct faculty_struct faculty1, faculty;
+        char FacultyList[1000];
+        FacultyList[0]='\0';
+        while (read(facultyFileDescriptor, &faculty1, sizeof(struct faculty_struct)) == sizeof(struct faculty_struct)){
+                char tempBuffer[1000];  // Temporary buffer to construct the string
+                sprintf(tempBuffer, "Login: %s ", faculty1.login);
+                strcat(FacultyList, tempBuffer);
+                sprintf(tempBuffer, "Name: %s ", faculty1.name);
+                strcat(FacultyList, tempBuffer);
+                strcat(FacultyList, "\n");
+        }
+        lseek(facultyFileDescriptor, 0, SEEK_SET);
+
+	strcpy(writeBuffer,FacultyList);
+        strcat(writeBuffer, STUDENT_DETAILS);
+
+        bzero(FacultyList, sizeof(FacultyList));
+        FacultyList[0]='\0';
+
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        char login[20];
+
+        strcpy(login, readBuffer);
+
+        bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
+
+        while(read(facultyFileDescriptor, &faculty, sizeof(struct faculty_struct)) == sizeof(struct faculty_struct)){
+                if (strcmp(faculty.login, login) == 0){
+			char myStr[1000];
+                        sprintf(myStr, "Name: %s\n", faculty.name);
+                        strcat(FacultyList, myStr);
+
+                        sprintf(myStr, "Department: %s\n", faculty.department);
+                        strcat(FacultyList, myStr);
+
+                        sprintf(myStr, "Email: %s\n", faculty.email);
+                        strcat(FacultyList, myStr);
+
+                        sprintf(myStr, "Address: %s\n", faculty.address);
+                        strcat(FacultyList, myStr);
+
+                        sprintf(myStr, "Login ID: %s\n", faculty.login);
+                        strcat(FacultyList, myStr);
+
+                        strcpy(writeBuffer, FacultyList);
+                        strcat(writeBuffer, "Press any key to exit\n");
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        if (writeBytes == -1)
+                        {
+                                perror("Error while writing to file!");
+                                return false;
+                        }
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        return true;
+                }
+        }
+        strcpy(writeBuffer,"Wrong Option!\n Press any key to exit\n");
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
+        return false;
+}
+
+bool block_student(int connectionFileDescriptor){
+	ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+        int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+        if (studentFileDescriptor == -1)
+        {
+                perror("Error while opening student file");
+                return false;
+        }
+        struct student_struct student1;
+        char StudentList[1000];
+        StudentList[0]='\0';
+        while (read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+                if(student1.active == false){
+			continue;
+		}
+		char tempBuffer[1000];  // Temporary buffer to construct the string
+                sprintf(tempBuffer, "Login: %s ", student1.login);
+                strcat(StudentList, tempBuffer);
+                sprintf(tempBuffer, "Name: %s ", student1.name);
+                strcat(StudentList, tempBuffer);
+                strcat(StudentList, "\n");
+        }
+        lseek(studentFileDescriptor, 0, SEEK_SET);
+
+        strcpy(writeBuffer,StudentList);
+        strcat(writeBuffer, STUDENT_BLOCK);
+
+        bzero(StudentList, sizeof(StudentList));
+        StudentList[0]='\0';
+
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+
+	if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        char login[20];
+
+        strcpy(login, readBuffer);
+
+        bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
+
+	while(read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+                if (strcmp(student1.login, login) == 0){
+			student1.active = false;
+			strcpy(writeBuffer, STUDENT_BLOCKED);
+			writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+			readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+			return true;
+		}
+	}
+	strcpy(writeBuffer, STUDENT_NOT_BLOCKED);
+	writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+	return false;
+}
+
+
+bool activate_student(int connectionFileDescriptor){
+        ssize_t readBytes, writeBytes;
+        char readBuffer[1000], writeBuffer[1000];
+        int studentFileDescriptor = open("STUDENT_FILE", O_RDONLY);
+        if (studentFileDescriptor == -1)
+        {
+                perror("Error while opening student file");
+                return false;
+        }
+        struct student_struct student1;
+        char StudentList[1000];
+        StudentList[0]='\0';
+        while (read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+                if(student1.active == true){
+			continue;
+		}
+		char tempBuffer[1000];  // Temporary buffer to construct the string
+                sprintf(tempBuffer, "Login: %s ", student1.login);
+                strcat(StudentList, tempBuffer);
+                sprintf(tempBuffer, "Name: %s ", student1.name);
+                strcat(StudentList, tempBuffer);
+                strcat(StudentList, "\n");
+        }
+        lseek(studentFileDescriptor, 0, SEEK_SET);
+
+        strcpy(writeBuffer,StudentList);
+        strcat(writeBuffer, STUDENT_ACTIVE);
+
+        bzero(StudentList, sizeof(StudentList));
+        StudentList[0]='\0';
+
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+
+        if (writeBytes == -1)
+        {
+                perror("Error while writing to file!");
+                return false;
+        }
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        char login[20];
+
+        strcpy(login, readBuffer);
+
+        bzero(writeBuffer, sizeof(writeBuffer));
+        bzero(readBuffer, sizeof(readBuffer));
+
+        while(read(studentFileDescriptor, &student1, sizeof(struct student_struct)) == sizeof(struct student_struct)){
+                if (strcmp(student1.login, login) == 0){
+                        student1.active = true;
+			strcpy(writeBuffer, STUDENT_ACTIVATED);
+                        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+                        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+                        return true;
+                }
+        }
+        strcpy(writeBuffer, STUDENT_NOT_ACTIVATED);
+        writeBytes = write(connectionFileDescriptor, writeBuffer, strlen(writeBuffer));
+        readBytes = read(connectionFileDescriptor, readBuffer, sizeof(readBuffer));
+        return false;
+}
+
+
+
+
+#endif
 
 

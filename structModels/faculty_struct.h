@@ -1,3 +1,6 @@
+#ifndef FACULTY_STRUCT
+#define FACULTY_STRUCT
+
 struct faculty_struct{
 	char name[30];
 	char department[30];
@@ -7,3 +10,5 @@ struct faculty_struct{
 	char login[30];
 	char password[10];
 };
+
+#endif

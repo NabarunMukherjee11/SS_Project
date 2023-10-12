@@ -11,8 +11,10 @@
 #include <stdbool.h> // Import for `bool` data type
 #include <stdlib.h>  // Import for `atoi` funtions
 
+#include "../Functions/student_portal.h"
 #include "../Functions/admin_portal.h"
 #include "../Functions/server_const.h"
+#include "../Functions/faculty_portal.h"
 
 void portal_handler(int connectionFileDescriptor){
 	printf("Connection is made\n");
@@ -38,12 +40,12 @@ void portal_handler(int connectionFileDescriptor){
 				case 1:
 					admin_portal(connectionFileDescriptor);
 					break;
-		/*		case 2:
+				case 2:
 					faculty_portal(connectionFileDescriptor);
 					break;
 				case 3: 
 					student_portal(connectionFileDescriptor);
-					break; */
+					break; 
 				default:
 					break;
 				}
