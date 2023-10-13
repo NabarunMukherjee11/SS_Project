@@ -6,6 +6,7 @@
 
 //ALL USE
 #define CHOICE "(y/n)"
+#define EXIT "Enter any key to EXIT\n"
 
 //Admin Page
 #define ADMIN_LOGIN_WELCOME "*********** WELCOME ADMIN ***********\nPlease authenticate with ADMIN password.\n Password\n"
@@ -49,6 +50,7 @@
 #define F_FACULTY_MENU "Choose the option you want to proceed with\n1. VIEW  OFFERING COURSE\n2. ADD NEW COURSE\n3. REMOVE COURSE FROM CATALOG\n4. UPDATE COURSE DETAILS\n 5. CHANGE PASSWORD\n6. LOGOUT & EXIT\n"
 #define F_FACULTY_LOGOUT "FACULTY has been logged out\n"
 #define F_FACULTY_AGAIN "You have entered wrong option\n"
+#define F_FACULTY_CHANGE_PASSWORD "Enter the new PASSWORD\nAnd please remeber it\n"
 
 //Student Page
 #define S_STUDENT_LOGIN_WELCOME "*********** WELCOME STUDENT ***********\nPlease authenticate with LOGIN ID and PASSWORD.\n LOGIN_ID:\n"
@@ -57,5 +59,13 @@
 #define S_STUDENT_MENU "Choose the option you want to proceed with\n1. VIEW ALL COURSES\n2. ENROLL NEW COURSE\n3. DROP COURSE\n4. VIEW COURSE DETAILS\n 5. CHANGE PASSWORD\n6. LOGOUT & EXIT\n"
 #define S_STUDENT_LOGOUT "STUDENT has been logged out\n"
 #define S_STUDENT_AGAIN "You have entered wrong option\n"
+
+//Course Page
+#define COURSE_NAME "ENTER the NAME of the COURSE:\n"
+#define COURSE_ID "ENTER the COURSE ID:\n"
+#define COURSE_SEATS "ENTER the TOTAL SEATS for the course\n"
+#define COURSE_ADDED "Course added successfully\nEnter any key to go to MENU\n"
+#define COURSE_LIST "Courses you are offering are\n" 
+
 
 #endif
