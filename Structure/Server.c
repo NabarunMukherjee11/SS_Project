@@ -54,10 +54,6 @@ void portal_handler(int connectionFileDescriptor){
 	printf("Closing the connection to server\n");
 }
 
-
-
-
-
 void main()
 {
     int socketFileDescriptor, socketBindStatus, socketListenStatus, connectionFileDescriptor;
@@ -97,6 +93,7 @@ void main()
         if (connectionFileDescriptor == -1){
 		perror("Error while connecting to client!");
         	close(socketFileDescriptor);
+		exit(1);
         }
 	else{
 		if(!fork()){ // child process will handle this client socket
@@ -108,6 +105,7 @@ void main()
 	}
     }
     close(socketFileDescriptor);
+    exit(0);
 }
 
 

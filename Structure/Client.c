@@ -64,6 +64,7 @@ void main(){
 	portal_handler(socketFileDescriptor);
 
 	close(socketFileDescriptor);
+	exit(0);
 }
 
 

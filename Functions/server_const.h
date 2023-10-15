@@ -9,11 +9,11 @@
 #define EXIT "Enter any key to EXIT\n"
 
 //Admin Page
-#define ADMIN_LOGIN_WELCOME "*********** WELCOME ADMIN ***********\nPlease authenticate with ADMIN password.\n Password\n"
+#define ADMIN_LOGIN_WELCOME "*********** WELCOME ADMIN ***********\nPlease authenticate with ADMIN password.\nPassword\n"
 #define ADMIN_PASSWORD "admin"
-#define ADMIN_LOGIN_SUCCESS "Welcome to Admin Portal. You are now logged in.\n"
+#define ADMIN_LOGIN_SUCCESS "******** WELCOME TO ADMIN PORTAL ********.\nYou are now logged in.\n"
 #define ADMIN_MENU "Welcome to Admin Menu.\nChoose the option you want to proceed with\n1. ADD STUDENT\n2. VIEW STUDENT DETAILS\n3. ADD FACULTY\n4. VIEW FACULTY DETAILS\n5. ACTIVATE STUDENT\n6. BLOCK STUDENT\n7. MODIFY STUDENT DETAILS\n8. MODIFY FACULTY DETAILS\n9. LOGOUT AND EXIT\nCHOOSE THE OPTION\n"
-#define ADMIN_LOGOUT "Admin has been logged out\n"
+#define ADMIN_LOGOUT "********** ADMIN LOGGED OUT **********\n"
 #define ADMIN_AGAIN "You have entered wrong option\n"
 #define STUDENT_NAME "Update student name\n"
 #define STUDENT_AGE "Update student age\n"
@@ -47,16 +47,16 @@
 #define F_FACULTY_LOGIN_WELCOME "*********** WELCOME FACULTY ***********\nPlease authenticate with LOGIN ID and PASSWORD.\n LOGIN_ID:\n"
 #define F_FACULTY_PASSWORD "PASSWORD:\n"
 #define F_FACULTY_LOGIN_SUCCESS "****** Welcome to Faculty Portal ******\nYou are now logged in\n"
-#define F_FACULTY_MENU "Choose the option you want to proceed with\n1. VIEW  OFFERING COURSE\n2. ADD NEW COURSE\n3. REMOVE COURSE FROM CATALOG\n4. UPDATE COURSE DETAILS\n 5. CHANGE PASSWORD\n6. LOGOUT & EXIT\n"
+#define F_FACULTY_MENU "Choose the option you want to proceed with\n1. VIEW  OFFERING COURSE\n2. ADD NEW COURSE\n3. REMOVE COURSE FROM CATALOG\n4. CHANGE PASSWORD\n5. LOGOUT & EXIT\n"
 #define F_FACULTY_LOGOUT "FACULTY has been logged out\n"
 #define F_FACULTY_AGAIN "You have entered wrong option\n"
-#define F_FACULTY_CHANGE_PASSWORD "Enter the new PASSWORD\nAnd please remeber it\n"
+#define F_FACULTY_CHANGE_PASSWORD "********Enter the new PASSWORD********\nPlease remember it\n"
 
 //Student Page
-#define S_STUDENT_LOGIN_WELCOME "*********** WELCOME STUDENT ***********\nPlease authenticate with LOGIN ID and PASSWORD.\n LOGIN_ID:\n"
+#define S_STUDENT_LOGIN_WELCOME "*********** WELCOME STUDENT ***********\nPlease authenticate yourself.\n LOGIN_ID:\n"
 #define S_STUDENT_PASSWORD "PASSWORD:\n"
-#define S_STUDENT_LOGIN_SUCCESS "****** Welcome to Student Portal ******\nYou are now logged in\n"
-#define S_STUDENT_MENU "Choose the option you want to proceed with\n1. VIEW ALL COURSES\n2. ENROLL NEW COURSE\n3. DROP COURSE\n4. VIEW COURSE DETAILS\n 5. CHANGE PASSWORD\n6. LOGOUT & EXIT\n"
+#define S_STUDENT_LOGIN_SUCCESS "****** WELCOME TO THE STUDENT PORTAL ******\nYou are now logged in\n"
+#define S_STUDENT_MENU "Choose the option you want to proceed with\n1. VIEW ALL COURSES\n2. ENROLL NEW COURSE\n3. DROP COURSE\n4. VIEW COURSE DETAILS\n5. CHANGE PASSWORD\n6. LOGOUT & EXIT\n"
 #define S_STUDENT_LOGOUT "STUDENT has been logged out\n"
 #define S_STUDENT_AGAIN "You have entered wrong option\n"
 
@@ -65,7 +65,16 @@
 #define COURSE_ID "ENTER the COURSE ID:\n"
 #define COURSE_SEATS "ENTER the TOTAL SEATS for the course\n"
 #define COURSE_ADDED "Course added successfully\nEnter any key to go to MENU\n"
-#define COURSE_LIST "Courses you are offering are\n" 
+#define COURSE_LIST "COURSES OFFERED\n" 
+#define COURSE_ENROLL "COURSES OFFERED\n"
+#define ENROLL "Enter the COURSE ID of the Course you want to ENROLL\n"
+#define NO_SEAT "OOPS! No Seats/Course avaliable for you\n"
+#define ALREADY_ENROLLED "Already Enrolled\nPress any key to exit\n"
+#define ENROLLED "You have been Enrolled\nPress any key to exit\n"
+#define COURSE_DROP "Enter the Course ID of the Course you want to drop\n"
+#define COURSE_DROPPED "COURSE has been dropped\nPress any key to continue\n"
+#define COURSE_NOT_FOUND "Course not found\nPress any key to continue\n"
+
 
 
 #endif
